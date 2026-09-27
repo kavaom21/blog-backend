@@ -10,29 +10,35 @@ dotenv.config();
 const app = express();
 app.use(cors());
 
-const PORT = process.env.PORT || 8000
-
+const PORT = process.env.PORT || 8000;
 
 app.use(express.json());
 
+let isConnected = false;
+
 const mongoconnect = async () => {
-
+    if (isConnected) return;
     try {
-        await mongoose.connect(process.env.MONGO_URI)
+        await mongoose.connect(process.env.MONGO_URI);
+        isConnected = true;
         console.log("mongoDB connected successfully");
-
     } catch (error) {
         console.log(error);
     }
-}
+};
 
-mongoconnect();
+app.use(async (req, res, next) => {
+    await mongoconnect();
+    next();
+});
 
 app.use("/api/users", Userrouter);
 app.use("/api/blogs", Blogrouter);
 
+if (process.env.VERCEL !== "1") {
+    app.listen(PORT, () => {
+        console.log(`server started on port ${PORT}`);
+    });
+}
 
-app.listen(PORT, (req, res) => {
-    console.log(`server started on port ${PORT}`)
-});
-
+export default app;
