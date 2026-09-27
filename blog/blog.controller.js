@@ -75,8 +75,10 @@ export const getBlogById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const blog = await Blog.findById(id).populate("author", "name email");
-
+        const blog = await Blog.findById(id)
+            .populate("author", "name email")
+            .populate("comments.user", "name");
+            
         if (!blog) {
             return sendError(res, "Blog not found", 404);
         }
@@ -131,7 +133,9 @@ export const commentOnBlog = async (req, res) => {
         blog.comments.push({ user: req.user.id, text });
         await blog.save();
 
-        return sendSuccess(res, "Comment added successfully", blog.comments, 201);
+        const updatedBlog = await Blog.findById(id).populate("comments.user", "name");
+
+        return sendSuccess(res, "Comment added successfully", updatedBlog.comments, 201);
 
     } catch (error) {
         return sendError(res, "INTERNAL ERROR", 500);
